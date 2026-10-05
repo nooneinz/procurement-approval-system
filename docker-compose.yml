@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: procurement
+      POSTGRES_USER: procurement
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?ضع DB_PASSWORD في .env}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U procurement"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+    environment:
+      DATABASE_URL: postgresql://procurement:${DB_PASSWORD}@db:5432/procurement
+      REDIS_URL: redis://redis:6379/0
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@company.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ضع ADMIN_PASSWORD في .env}
+      JWT_SECRET: ${JWT_SECRET:?ضع JWT_SECRET في .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes: [uploads:/data/uploads]
+    ports: ["8000:8000"]
+volumes:
+  pgdata:
+  uploads:

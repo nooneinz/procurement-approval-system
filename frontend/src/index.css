@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --color-navy-900: #14284a;
+  --color-navy-800: #1f3a5f;
+  --color-navy-700: #2a4a77;
+  --color-navy-50: #eef2f8;
+  --color-ink: #1c2430;
+  --color-muted: #5b6676;
+  --color-line: #d8dee8;
+  --color-surface: #f5f7fa;
+  --color-ok: #1d6b4f;
+  --color-warn: #8a5a00;
+  --color-bad: #a32a2a;
+}
+
+html, body, #root { min-height: 100%; }
+body { font-family: var(--font-sans); background: var(--color-surface); color: var(--color-ink); line-height: 1.7; }
+:focus-visible { outline: 3px solid #3b6fb6; outline-offset: 2px; }
+.card { background: #fff; border: 1px solid var(--color-line); border-radius: 10px; padding: 1.25rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; padding: 0 1.1rem; border-radius: 8px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: background .15s; }
+.btn-primary { background: var(--color-navy-800); color: #fff; }
+.btn-primary:hover { background: var(--color-navy-900); }
+.btn-ghost { background: #fff; color: var(--color-navy-800); border-color: var(--color-line); }
+.btn-ghost:hover { background: var(--color-navy-50); }
+.btn-ok { background: var(--color-ok); color: #fff; }
+.btn-bad { background: var(--color-bad); color: #fff; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.input { width: 100%; min-height: 44px; padding: .5rem .75rem; border: 1px solid #b9c2d0; border-radius: 8px; background: #fff; font: inherit; }
+label.lbl { display: block; font-size: .9rem; font-weight: 600; margin-bottom: .25rem; color: var(--color-ink); }
+.badge { display: inline-block; padding: .1rem .65rem; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+.th { text-align: start; font-size: .82rem; color: var(--color-muted); font-weight: 600; padding: .6rem .75rem; border-bottom: 1px solid var(--color-line); }
+.td { padding: .7rem .75rem; border-bottom: 1px solid #eef1f6; vertical-align: top; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
