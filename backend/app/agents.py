@@ -35,13 +35,51 @@ def _json_from(text: str) -> dict:
     return json.loads(m.group(0)) if m else {}
 
 
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩٫٬", "0123456789.,")
+_TOTAL_RE = re.compile(r"(?:الإجمالي|الاجمالي|المجموع|الصافي|grand\s*total|total)[^\d\n]{0,40}([\d][\d,\.]*)", re.I)
+
+
+def _read_pdf_locally(path: Path, entered: float) -> dict | None:
+    """قراءة PDF نصّي بدون ذكاء اصطناعي: استخراج الإجمالي والتحقق من ذكر الضريبة."""
+    try:
+        from pypdf import PdfReader
+        text = "\n".join((p.extract_text() or "") for p in PdfReader(str(path)).pages)
+    except Exception:  # noqa: BLE001
+        return None
+    text = text.translate(_AR_DIGITS)
+    if len(text.strip()) < 20:
+        return None
+    totals = []
+    for m in _TOTAL_RE.finditer(text):
+        try:
+            totals.append(float(m.group(1).replace(",", "").rstrip(".")))
+        except ValueError:
+            pass
+    flags = []
+    out = {"mode": "pdf_text", "total": None, "matches_entered_amount": None, "red_flags": flags}
+    if totals:
+        out["total"] = totals[-1]
+        out["matches_entered_amount"] = abs(totals[-1] - entered) <= max(0.5, entered * 0.01)
+    else:
+        flags.append("لم يُعثر على سطر الإجمالي في الملف")
+    if not re.search(r"vat|ضريبة|الضريبة", text, re.I):
+        flags.append("لا يوجد ذكر لضريبة القيمة المضافة (VAT) في العرض")
+    if re.search(r"(?:valid|صالح|صلاحية)[^\n]{0,30}", text, re.I) is None:
+        flags.append("لا توجد مدة صلاحية للعرض")
+    return out
+
+
 # ---------- قراءة ملف عرض السعر ----------
 def analyze_quote_file(quote: Quote) -> dict:
     if not quote.file_path:
         return {"mode": "none", "note": "لا يوجد ملف مرفق مع هذا العرض."}
-    if not ai_enabled():
-        return {"mode": "rules", "note": "قراءة الملف تلقائياً غير مفعّلة (لا يوجد مفتاح ANTHROPIC_API_KEY). تمت المقارنة بالأرقام المُدخلة فقط."}
     path = Path(quote.file_path)
+    if not ai_enabled():
+        if path.suffix.lower() == ".pdf" and path.exists():
+            local = _read_pdf_locally(path, quote.amount)
+            if local:
+                return local
+        return {"mode": "rules", "note": "هذا الملف (صورة أو PDF ممسوح) يحتاج مفتاح ANTHROPIC_API_KEY لقراءته. تمت المقارنة بالأرقام المُدخلة فقط."}
     media = MEDIA.get(path.suffix.lower())
     if not media or not path.exists():
         return {"mode": "error", "note": "نوع الملف غير مدعوم أو الملف غير موجود."}
@@ -97,27 +135,27 @@ def run_audit_agent(db: Session, req: PurchaseRequest) -> list[AuditFlag]:
     if mine and req.amount < config.LEVEL_FINANCE_FROM:
         combined = req.amount + sum(o.amount for o in mine)
         if combined >= config.LEVEL_FINANCE_FROM and all(o.amount < config.LEVEL_FINANCE_FROM for o in mine):
-            flags.append(("SPLIT_PURCHASE", "high", f"اشتباه تجزئة مشتريات: {len(mine) + 1} طلبات من نفس مقدّم الطلب خلال 14 يوماً مجموعها {combined:,.0f} ريال يتجاوز حد المدير المالي."))
+            flags.append(("SPLIT_PURCHASE", "high", f"اشتباه تجزئة مشتريات: {len(mine) + 1} طلبات من نفس مقدّم الطلب خلال 14 يوماً مجموعها {combined:,.3f} ر.ع يتجاوز حد المدير المالي."))
 
     for t in (config.LEVEL_FINANCE_FROM, config.LEVEL_GM_FROM):
         if t * 0.95 <= req.amount < t:
-            flags.append(("NEAR_THRESHOLD", "medium", f"المبلغ {req.amount:,.0f} أقل بقليل من حد الموافقة {t:,.0f} ريال."))
+            flags.append(("NEAR_THRESHOLD", "medium", f"المبلغ {req.amount:,.3f} أقل بقليل من حد الموافقة {t:,.3f} ر.ع."))
 
     if len(req.quotes) < 2 and req.amount >= config.SINGLE_QUOTE_LIMIT:
         flags.append(("SINGLE_QUOTE", "medium", "عرض سعر واحد فقط لمبلغ يتطلب مقارنة بين عروض."))
 
     b = budget_status(db, req.department_id, exclude_request_id=req.id)
     if req.amount > b["remaining"]:
-        flags.append(("OVER_BUDGET", "high", f"المبلغ يتجاوز المتبقي من ميزانية القسم ({b['remaining']:,.0f} ريال)."))
+        flags.append(("OVER_BUDGET", "high", f"المبلغ يتجاوز المتبقي من ميزانية القسم ({b['remaining']:,.3f} ر.ع)."))
 
     items_total = sum(i.quantity * i.unit_price for i in req.items)
     if items_total > 0 and selected and abs(items_total - selected.amount) > items_total * 0.15:
-        flags.append(("QUOTE_MISMATCH", "medium", f"إجمالي البنود ({items_total:,.0f}) يختلف عن العرض المختار ({selected.amount:,.0f}) بأكثر من 15%."))
+        flags.append(("QUOTE_MISMATCH", "medium", f"إجمالي البنود ({items_total:,.3f}) يختلف عن العرض المختار ({selected.amount:,.3f}) بأكثر من 15%."))
 
     if selected and len(req.quotes) > 1:
         lowest = min(req.quotes, key=lambda q: q.amount)
         if lowest.id != selected.id and len(req.justification.strip()) < 20:
-            flags.append(("NOT_LOWEST", "medium", f"تم اختيار عرض أعلى من الأقل ({lowest.vendor.name}: {lowest.amount:,.0f}) بدون مبرر مكتوب كافٍ."))
+            flags.append(("NOT_LOWEST", "medium", f"تم اختيار عرض أعلى من الأقل ({lowest.vendor.name}: {lowest.amount:,.3f}) بدون مبرر مكتوب كافٍ."))
 
     for q in req.quotes:
         a = q.analysis or {}
@@ -155,11 +193,11 @@ def run_procurement_agent(db: Session, req: PurchaseRequest) -> dict:
     sel = req.amount if req.amount else best["amount"]
 
     if best["amount"] > b["remaining"]:
-        rec, why = "reject", f"أقل عرض ({best['amount']:,.0f} ريال) يتجاوز المتبقي من ميزانية القسم ({b['remaining']:,.0f} ريال)."
+        rec, why = "reject", f"أقل عرض ({best['amount']:,.3f} ر.ع) يتجاوز المتبقي من ميزانية القسم ({b['remaining']:,.3f} ر.ع)."
     elif high:
         rec, why = "review", "توجد تنبيهات تدقيق عالية الخطورة تستدعي مراجعة بشرية قبل الموافقة."
     else:
-        rec, why = "approve", f"أقل عرض هو {best['vendor']} بمبلغ {best['amount']:,.0f} ريال ضمن الميزانية المتاحة ولا توجد تنبيهات عالية الخطورة."
+        rec, why = "approve", f"أقل عرض هو {best['vendor']} بمبلغ {best['amount']:,.3f} ر.ع ضمن الميزانية المتاحة ولا توجد تنبيهات عالية الخطورة."
     result = {"mode": "rules", "recommendation": rec, "reasoning": why, "best_quote_id": best["quote_id"], "budget": b, "quotes": rows, "risks": [f.message for f in high]}
 
     if ai_enabled():

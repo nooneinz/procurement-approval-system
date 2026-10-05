@@ -65,12 +65,12 @@ def _digest(prev: str, ts: datetime, user_id, action, entity, entity_id, details
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def audit(db: Session, user: User | None, action: str, entity: str = "", entity_id: int | None = None, details: str = ""):
+def audit(db: Session, user: User | None, action: str, entity: str = "", entity_id: int | None = None, details: str = "", actor: str = ""):
     last = db.execute(select(AuditLog).order_by(AuditLog.id.desc()).limit(1)).scalar_one_or_none()
     prev = last.hash if last else ""
     ts = datetime.utcnow().replace(microsecond=0)
     row = AuditLog(
-        ts=ts, user_id=user.id if user else None, user_name=user.name if user else "النظام",
+        ts=ts, user_id=user.id if user else None, user_name=actor or (user.name if user else "النظام"),
         action=action, entity=entity, entity_id=entity_id, details=details, prev_hash=prev,
         hash=_digest(prev, ts, user.id if user else None, action, entity, entity_id, details),
     )

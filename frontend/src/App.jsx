@@ -8,6 +8,7 @@ import NewRequest from './pages/NewRequest.jsx'
 import RequestDetail from './pages/RequestDetail.jsx'
 import Admin from './pages/Admin.jsx'
 import Audit from './pages/Audit.jsx'
+import Agents from './pages/Agents.jsx'
 
 const Auth = createContext(null)
 export const useAuth = () => useContext(Auth)
@@ -54,6 +55,7 @@ function Shell({ user, onLogout, children }) {
           <nav className="flex flex-wrap gap-1 flex-1" aria-label="التنقل الرئيسي">
             <NavLink to="/" end className={link}>لوحة التحكم</NavLink>
             <NavLink to="/requests" className={link}>الطلبات</NavLink>
+            <NavLink to="/agents" className={link}>الوكلاء</NavLink>
             {canAudit && <NavLink to="/audit" className={link}>التدقيق</NavLink>}
             {['admin', 'finance_manager', 'dept_manager'].includes(user.role) && <NavLink to="/admin" className={link}>الإدارة</NavLink>}
           </nav>
@@ -92,6 +94,7 @@ export default function App() {
           <Route path="/requests/new" element={<NewRequest />} />
           <Route path="/requests/:id" element={<RequestDetail />} />
           <Route path="/audit" element={<Audit />} />
+          <Route path="/agents" element={<Agents />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -24,6 +24,6 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 ADMIN_NAME = os.getenv("ADMIN_NAME", "مشرف النظام")
 
 # مستويات الموافقة حسب قيمة الطلب (ريال)
-LEVEL_FINANCE_FROM = float(os.getenv("LEVEL_FINANCE_FROM", "5000"))
-LEVEL_GM_FROM = float(os.getenv("LEVEL_GM_FROM", "50000"))
+LEVEL_FINANCE_FROM = float(os.getenv("LEVEL_FINANCE_FROM", "1000"))
+LEVEL_GM_FROM = float(os.getenv("LEVEL_GM_FROM", "10000"))
 SINGLE_QUOTE_LIMIT = LEVEL_FINANCE_FROM

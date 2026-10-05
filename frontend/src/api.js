@@ -33,7 +33,8 @@ export async function openFile(path) {
   window.open(URL.createObjectURL(await res.blob()), '_blank')
 }
 
-export const money = (n) => `${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} ر.س`
+// الريال العماني: ثلاث خانات عشرية (البيسة)
+export const money = (n) => `${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 })} ر.ع`
 export const dateAr = (s) => (s ? new Date(s + (s.endsWith('Z') ? '' : 'Z')).toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' }) : '—')
 
 export const STATUS = {

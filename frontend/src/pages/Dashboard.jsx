@@ -58,13 +58,12 @@ export default function Dashboard() {
       </section>
 
       {agents && (
-        <section className="card">
-          <h2 className="font-bold mb-2">وكلاء الذكاء الاصطناعي</h2>
-          <ul className="space-y-1 text-sm leading-7">
-            <li><b>وكيل التدقيق:</b> فعّال — يفحص كل طلب عند الإرسال (تكرار، تجزئة مشتريات، تجاوز الميزانية، قرب الحدود، عرض واحد).</li>
-            <li><b>وكيل المشتريات:</b> {agents.ai_enabled ? `فعّال بنموذج ${agents.model} — يقرأ ملفات العروض ويوصي بالموافقة أو الرفض.` : 'يعمل بالقواعد حالياً؛ قراءة ملفات PDF والصور تتطلب إضافة مفتاح ANTHROPIC_API_KEY.'}</li>
-            <li><b>حدود الموافقة:</b> مدير مالي من {money(agents.thresholds.finance_from)}، ومدير عام من {money(agents.thresholds.general_manager_from)}.</li>
-          </ul>
+        <section className="card flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[240px]">
+            <h2 className="font-bold">وكلاء الذكاء الاصطناعي</h2>
+            <p className="text-sm text-muted">وكيل التدقيق فعّال على كل طلب. وكيل المشتريات {agents.ai_enabled ? `يعمل بنموذج ${agents.model}` : 'يعمل بالقواعد وقراءة ملفات PDF النصّية'}. حدود الموافقة: مالي من {money(agents.thresholds.finance_from)}، ومدير عام من {money(agents.thresholds.general_manager_from)}.</p>
+          </div>
+          <Link to="/agents" className="btn btn-primary">فتح لوحة الوكلاء</Link>
         </section>
       )}
 

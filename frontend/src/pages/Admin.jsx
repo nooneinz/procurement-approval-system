@@ -22,7 +22,7 @@ function Departments({ canEdit }) {
       {canEdit && (
         <form onSubmit={add} className="card grid md:grid-cols-3 gap-3 items-end">
           <div><label className="lbl" htmlFor="dn">اسم القسم</label><input id="dn" className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div><label className="lbl" htmlFor="db">الميزانية السنوية (ر.س)</label><input id="db" className="input" type="number" min="0" required value={f.annual_budget} onChange={(e) => setF({ ...f, annual_budget: e.target.value })} /></div>
+          <div><label className="lbl" htmlFor="db">الميزانية السنوية (ر.ع)</label><input id="db" className="input" type="number" min="0" required value={f.annual_budget} onChange={(e) => setF({ ...f, annual_budget: e.target.value })} /></div>
           <button className="btn btn-primary">إضافة قسم</button>
           {err && <p role="alert" className="text-bad md:col-span-3">{err}</p>}
         </form>
@@ -50,8 +50,8 @@ function Vendors({ canAdd }) {
       {canAdd && (
         <form onSubmit={add} className="card grid md:grid-cols-5 gap-3 items-end">
           <div className="md:col-span-2"><label className="lbl" htmlFor="vn">اسم المورد</label><input id="vn" className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div><label className="lbl" htmlFor="vt">الرقم الضريبي</label><input id="vt" className="input" dir="ltr" value={f.tax_number} onChange={(e) => setF({ ...f, tax_number: e.target.value })} /></div>
-          <div><label className="lbl" htmlFor="vp">الجوال</label><input id="vp" className="input" dir="ltr" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
+          <div><label className="lbl" htmlFor="vt">الرقم الضريبي (VATIN)</label><input id="vt" className="input" dir="ltr" value={f.tax_number} onChange={(e) => setF({ ...f, tax_number: e.target.value })} /></div>
+          <div><label className="lbl" htmlFor="vp">الجوال</label><input id="vp" className="input" dir="ltr" placeholder="+968 9XXX XXXX" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
           <button className="btn btn-primary">إضافة مورد</button>
           {err && <p role="alert" className="text-bad md:col-span-5">{err}</p>}
         </form>

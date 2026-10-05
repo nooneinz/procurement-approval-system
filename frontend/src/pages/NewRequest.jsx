@@ -33,7 +33,7 @@ export default function NewRequest() {
           <div key={i} className="grid grid-cols-12 gap-2 items-end">
             <div className="col-span-12 md:col-span-6"><label className="lbl" htmlFor={`n${i}`}>البند</label><input id={`n${i}`} className="input" required value={x.name} onChange={(e) => set(i, 'name', e.target.value)} /></div>
             <div className="col-span-5 md:col-span-2"><label className="lbl" htmlFor={`q${i}`}>الكمية</label><input id={`q${i}`} className="input" type="number" min="0.01" step="any" required value={x.quantity} onChange={(e) => set(i, 'quantity', e.target.value)} /></div>
-            <div className="col-span-5 md:col-span-3"><label className="lbl" htmlFor={`p${i}`}>سعر الوحدة التقديري</label><input id={`p${i}`} className="input" type="number" min="0" step="any" required value={x.unit_price} onChange={(e) => set(i, 'unit_price', e.target.value)} /></div>
+            <div className="col-span-5 md:col-span-3"><label className="lbl" htmlFor={`p${i}`}>سعر الوحدة التقديري</label><input id={`p${i}`} className="input" type="number" min="0" step="0.001" required value={x.unit_price} onChange={(e) => set(i, 'unit_price', e.target.value)} /></div>
             <div className="col-span-2 md:col-span-1">{items.length > 1 && <button type="button" className="btn btn-ghost w-full" aria-label="حذف البند" onClick={() => setItems(items.filter((_, j) => j !== i))}>✕</button>}</div>
           </div>
         ))}

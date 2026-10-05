@@ -35,7 +35,7 @@ function QuoteForm({ rid, onDone }) {
             {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
           </select>
         </div>
-        <div><label className="lbl" htmlFor="a">إجمالي العرض (ر.س)</label><input id="a" className="input" type="number" min="1" step="any" required value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></div>
+        <div><label className="lbl" htmlFor="a">إجمالي العرض (ر.ع)</label><input id="a" className="input" type="number" min="0.001" step="0.001" required value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></div>
         <div><label className="lbl" htmlFor="d">مدة التوريد (يوم)</label><input id="d" className="input" type="number" min="0" value={f.delivery_days} onChange={(e) => setF({ ...f, delivery_days: e.target.value })} /></div>
       </div>
       <div className="flex gap-2 items-end flex-wrap">
@@ -103,15 +103,15 @@ export default function RequestDetail() {
                   <span>{selected && <span className="badge bg-navy-800 text-white me-1">المختار</span>}{bestQuote === q.id && <span className="badge bg-emerald-100 text-emerald-900">ترشيح الوكيل</span>}</span></div>
                 <div className="text-xl font-bold my-1">{money(q.amount)}</div>
                 <div className="text-sm text-muted">التوريد: {q.delivery_days ? `${q.delivery_days} يوم` : 'غير محدد'}{q.notes && ` — ${q.notes}`}</div>
-                {q.analysis && q.analysis.mode === 'ai' && (
+                {q.analysis && ['ai', 'pdf_text'].includes(q.analysis.mode) && (
                   <div className="text-sm mt-2 p-2 rounded bg-white border border-line">
-                    <b>قراءة الملف بالذكاء الاصطناعي:</b> المجموع المقروء {money(q.analysis.total)}{' '}
+                    <b>{q.analysis.mode === 'ai' ? 'قراءة الملف بالذكاء الاصطناعي' : 'قراءة الملف (PDF نصّي)'}:</b> المجموع المقروء {money(q.analysis.total)}{' '}
                     {q.analysis.matches_entered_amount === true && <span className="text-ok">✓ يطابق المُدخل</span>}
                     {q.analysis.matches_entered_amount === false && <span className="text-bad">✗ لا يطابق المُدخل</span>}
                     {(q.analysis.red_flags || []).map((x, i) => <div key={i} className="text-warn">⚠ {x}</div>)}
                   </div>
                 )}
-                {q.analysis && q.analysis.mode !== 'ai' && q.has_file && <p className="text-xs text-muted mt-2">{q.analysis.note}</p>}
+                {q.analysis && !['ai', 'pdf_text'].includes(q.analysis.mode) && q.has_file && <p className="text-xs text-muted mt-2">{q.analysis.note}</p>}
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {q.has_file && <button className="btn btn-ghost" onClick={() => openFile(`/quotes/${q.id}/file`).catch((e) => setErr(e.message))}>عرض الملف: {q.file_name}</button>}
                   {r.can_edit && !selected && <button className="btn btn-primary" disabled={busy} onClick={() => act(() => api(`/requests/${id}/select-quote`, { method: 'POST', body: { quote_id: q.id, justification: just } }))}>اختيار هذا العرض</button>}

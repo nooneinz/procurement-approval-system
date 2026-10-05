@@ -224,7 +224,7 @@ def create_department(body: DeptIn, user: User = Depends(require_roles("admin", 
     d = Department(name=body.name, annual_budget=body.annual_budget)
     db.add(d)
     db.flush()
-    audit(db, user, "department.create", "department", d.id, f"{d.name} — ميزانية {d.annual_budget:,.0f}")
+    audit(db, user, "department.create", "department", d.id, f"{d.name} — ميزانية {d.annual_budget:,.3f}")
     db.commit()
     return {"id": d.id, "name": d.name, **budget_status(db, d.id)}
 
@@ -234,7 +234,7 @@ def update_department(did: int, body: DeptIn, user: User = Depends(require_roles
     d = db.get(Department, did)
     if not d:
         raise HTTPException(404, "القسم غير موجود")
-    audit(db, user, "department.update", "department", d.id, f"الميزانية {d.annual_budget:,.0f} → {body.annual_budget:,.0f}")
+    audit(db, user, "department.update", "department", d.id, f"الميزانية {d.annual_budget:,.3f} → {body.annual_budget:,.3f}")
     d.name, d.annual_budget = body.name, body.annual_budget
     db.commit()
     return {"id": d.id, "name": d.name, **budget_status(db, d.id)}
@@ -359,7 +359,7 @@ async def add_quote(rid: int, vendor_id: int = Form(...), amount: float = Form(.
     q.vendor = vendor
     q.analysis = analyze_quote_file(q)
     r.quotes.append(q) if q not in r.quotes else None
-    audit(db, user, "quote.add", "request", r.id, f"{vendor.name} — {amount:,.0f} ريال")
+    audit(db, user, "quote.add", "request", r.id, f"{vendor.name} — {amount:,.3f} ر.ع")
     db.commit()
     return q_out(q)
 
@@ -403,7 +403,7 @@ def select_quote(rid: int, body: SelectIn, user: User = Depends(current_user), d
     r.selected_quote_id, r.amount = q.id, q.amount
     if body.justification is not None:
         r.justification = body.justification
-    audit(db, user, "quote.select", "request", r.id, f"{q.vendor.name} — {q.amount:,.0f} ريال")
+    audit(db, user, "quote.select", "request", r.id, f"{q.vendor.name} — {q.amount:,.3f} ر.ع")
     db.commit()
     return {"ok": True}
 
@@ -424,8 +424,9 @@ def submit_request(rid: int, user: User = Depends(current_user), db: Session = D
     new_flags = run_audit_agent(db, r)
     db.flush()
     r.ai_recommendation = run_procurement_agent(db, r)
+    _log_agents(db, r, new_flags)
     audit(db, user, "request.submit", "request", r.id,
-          f"{r.number} — {r.amount:,.0f} ريال — مسار: {' ← '.join(ROLE_LABELS[a.role] for a in r.approvals)}"
+          f"{r.number} — {r.amount:,.3f} ر.ع — مسار: {' ← '.join(ROLE_LABELS[a.role] for a in r.approvals)}"
           + (f" — تنبيهات تدقيق: {len(new_flags)}" if new_flags else ""))
     notify(db, [u.id for u in users_with_role(db, "dept_manager", r.department_id)], f"طلب جديد بانتظار موافقتك: {r.number} — {r.title}", r.id)
     if any(f.severity == "high" for f in new_flags):
@@ -459,7 +460,7 @@ def decide(rid: int, body: DecisionIn, user: User = Depends(current_user), db: S
         if r.current_level >= len(r.approvals):
             r.status = "approved"
             notify(db, [r.requester_id], f"تمت الموافقة النهائية على طلبك {r.number}", r.id)
-            notify(db, [u.id for u in users_with_role(db, "finance_manager")], f"طلب معتمد جاهز للصرف: {r.number} — {r.amount:,.0f} ريال", r.id)
+            notify(db, [u.id for u in users_with_role(db, "finance_manager")], f"طلب معتمد جاهز للصرف: {r.number} — {r.amount:,.3f} ر.ع", r.id)
         else:
             nxt = r.approvals[r.current_level].role
             notify(db, [u.id for u in users_with_role(db, nxt, r.department_id if nxt == "dept_manager" else None)],
@@ -489,7 +490,8 @@ def reanalyze(rid: int, user: User = Depends(require_roles("dept_manager", "fina
     run_audit_agent(db, r)
     db.flush()
     r.ai_recommendation = run_procurement_agent(db, r)
-    audit(db, user, "agent.reanalyze", "request", r.id, r.number)
+    _log_agents(db, r, [f for f in r.flags if not f.resolved])
+    audit(db, user, "agent.reanalyze", "request", r.id, f"{r.number} — أعاد {user.name} تشغيل الوكلاء")
     db.commit()
     return r_out(r, full=True)
 
@@ -579,6 +581,57 @@ def notifications_read(user: User = Depends(current_user), db: Session = Depends
         n.read = True
     db.commit()
     return {"ok": True}
+
+
+REC_AR = {"approve": "الموافقة", "reject": "الرفض", "review": "المراجعة البشرية"}
+
+
+def _log_agents(db: Session, r: PurchaseRequest, flags):
+    audit(db, None, "agent.audit", "request", r.id,
+          f"{r.number}: " + (f"رصد {len(flags)} تنبيه ({', '.join(sorted({f.code for f in flags}))})" if flags else "لا توجد مخالفات"),
+          actor="وكيل التدقيق")
+    rec = r.ai_recommendation or {}
+    audit(db, None, "agent.procurement", "request", r.id,
+          f"{r.number}: توصية بـ{REC_AR.get(rec.get('recommendation'), '—')} ({'ذكاء اصطناعي' if rec.get('mode') == 'ai' else 'قواعد'}) — {rec.get('reasoning', '')}",
+          actor="وكيل المشتريات")
+
+
+@app.get("/api/agents/overview")
+def agents_overview(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    rows = [r for r in db.execute(select(PurchaseRequest).order_by(PurchaseRequest.id.desc())).scalars() if can_view(user, r)]
+    analyzed = [r for r in rows if r.ai_recommendation]
+    recs = {"approve": 0, "review": 0, "reject": 0}
+    for r in analyzed:
+        recs[r.ai_recommendation.get("recommendation", "review")] += 1
+    files = {"ai": 0, "pdf_text": 0, "unread": 0}
+    for r in rows:
+        for q in r.quotes:
+            if q.file_path:
+                m = (q.analysis or {}).get("mode")
+                files["ai" if m == "ai" else "pdf_text" if m == "pdf_text" else "unread"] += 1
+    by_code: dict[str, int] = {}
+    open_flags = 0
+    for r in rows:
+        for f in r.flags:
+            if not f.resolved:
+                open_flags += 1
+                by_code[f.code] = by_code.get(f.code, 0) + 1
+    activity = []
+    if user.role in AUDIT_ROLES or user.role == "dept_manager":
+        ids = {r.id for r in rows}
+        for a in db.execute(select(AuditLog).where(AuditLog.action.like("agent.%")).order_by(AuditLog.id.desc()).limit(60)).scalars():
+            if user.role in AUDIT_ROLES or a.entity_id in ids:
+                activity.append({"id": a.id, "ts": a.ts.isoformat(), "agent": a.user_name, "details": a.details})
+    return {
+        "ai_enabled": ai_enabled(), "model": config.AI_MODEL if ai_enabled() else None,
+        "analyzed": len(analyzed), "recs": recs, "files": files, "open_flags": open_flags, "flags_by_code": by_code,
+        "pending": [{"id": r.id, "number": r.number, "title": r.title, "amount": r.amount,
+                     "recommendation": r.ai_recommendation.get("recommendation") if r.ai_recommendation else None,
+                     "mode": r.ai_recommendation.get("mode") if r.ai_recommendation else None,
+                     "flags_open": len([f for f in r.flags if not f.resolved])} for r in rows if r.status == "pending"],
+        "activity": activity[:25],
+        "thresholds": {"finance_from": config.LEVEL_FINANCE_FROM, "general_manager_from": config.LEVEL_GM_FROM},
+    }
 
 
 @app.get("/api/agents/status")
