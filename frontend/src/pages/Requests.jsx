@@ -34,8 +34,8 @@ export default function Requests() {
             {rows === null && <tr><td className="td" colSpan="7">جارٍ التحميل…</td></tr>}
             {rows && shown.length === 0 && <tr><td className="td text-muted" colSpan="7">لا توجد طلبات.</td></tr>}
             {shown.map((r) => (
-              <tr key={r.id} className="hover:bg-navy-50">
-                <td className="td font-semibold"><Link className="text-navy-800 underline" to={`/requests/${r.id}`}>{r.number}</Link></td>
+              <tr key={r.id} className="hover:bg-brand-50">
+                <td className="td font-semibold"><Link className="text-brand-800 underline" to={`/requests/${r.id}`}>{r.number}</Link></td>
                 <td className="td">{r.title}{r.flags_open > 0 && <span className="badge bg-red-100 text-red-900 ms-2">⚑ {r.flags_open}</span>}</td>
                 <td className="td">{r.department}</td>
                 <td className="td">{r.requester}</td>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, money, dateAr } from '../api.js'
 import { useAuth } from '../App.jsx'
+import ChatPanel from '../ChatPanel.jsx'
 
 const CODES = {
   DUPLICATE: 'طلب مكرر', SPLIT_PURCHASE: 'تجزئة مشتريات', NEAR_THRESHOLD: 'قريب من حد الموافقة', SINGLE_QUOTE: 'عرض سعر واحد',
@@ -11,7 +12,7 @@ const CODES = {
 const REC = { approve: ['الموافقة', 'bg-emerald-100 text-emerald-900'], reject: ['الرفض', 'bg-red-100 text-red-900'], review: ['مراجعة بشرية', 'bg-amber-100 text-amber-900'] }
 
 function Num({ label, value, tone = '' }) {
-  return <div className="rounded-lg bg-navy-50 p-3 text-center"><div className={`text-2xl font-bold ${tone}`}>{value}</div><div className="text-xs text-muted">{label}</div></div>
+  return <div className="rounded-lg bg-brand-50 p-3 text-center"><div className={`text-2xl font-bold ${tone}`}>{value}</div><div className="text-xs text-muted">{label}</div></div>
 }
 
 export default function Agents() {
@@ -19,8 +20,9 @@ export default function Agents() {
   const [d, setD] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [cat, setCat] = useState(null)
   const load = useCallback(() => api('/agents/overview').then(setD), [])
-  useEffect(() => { load(); const t = setInterval(load, 10000); return () => clearInterval(t) }, [load])
+  useEffect(() => { api('/agents/catalog').then(setCat); load(); const t = setInterval(load, 10000); return () => clearInterval(t) }, [load])
   const canRun = ['admin', 'finance_manager', 'general_manager'].includes(user.role)
   const scan = async () => {
     setBusy(true)
@@ -31,6 +33,7 @@ export default function Agents() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">وكلاء الذكاء الاصطناعي</h1>
+      {cat && <ChatPanel agents={cat} aiEnabled={d.ai_enabled} model={d.model} />}
       <div className="grid md:grid-cols-2 gap-4">
         <section className="card space-y-4" aria-labelledby="pa">
           <div className="flex items-center gap-2">
@@ -76,7 +79,7 @@ export default function Agents() {
             {d.pending.length === 0 && <tr><td className="td text-muted" colSpan="4">لا توجد طلبات معلّقة — تظهر هنا فور إرسال أي طلب للموافقة.</td></tr>}
             {d.pending.map((r) => (
               <tr key={r.id}>
-                <td className="td"><Link className="underline text-navy-800 font-semibold" to={`/requests/${r.id}`}>{r.number}</Link><div className="text-sm text-muted">{r.title}</div></td>
+                <td className="td"><Link className="underline text-brand-800 font-semibold" to={`/requests/${r.id}`}>{r.number}</Link><div className="text-sm text-muted">{r.title}</div></td>
                 <td className="td">{money(r.amount)}</td>
                 <td className="td">{r.recommendation ? <span className={`badge ${REC[r.recommendation][1]}`}>{REC[r.recommendation][0]}</span> : '—'}</td>
                 <td className="td">{r.flags_open ? <span className="badge bg-red-100 text-red-900">⚑ {r.flags_open}</span> : <span className="text-ok">لا يوجد</span>}</td>
@@ -92,7 +95,7 @@ export default function Agents() {
           <ul className="space-y-3">
             {d.activity.map((a) => (
               <li key={a.id} className="flex gap-3 items-start">
-                <span className={`badge mt-1 whitespace-nowrap ${a.agent === 'وكيل التدقيق' ? 'bg-navy-50 text-navy-800' : 'bg-emerald-100 text-emerald-900'}`}>{a.agent}</span>
+                <span className={`badge mt-1 whitespace-nowrap ${a.agent === 'وكيل التدقيق' ? 'bg-brand-50 text-brand-800' : 'bg-emerald-100 text-emerald-900'}`}>{a.agent}</span>
                 <div className="text-sm"><div>{a.details}</div><div className="text-xs text-muted">{dateAr(a.ts)}</div></div>
               </li>
             ))}

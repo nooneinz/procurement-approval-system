@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, setToken } from '../api.js'
+import { Logo } from '../layout.jsx'
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
@@ -18,8 +20,9 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
-      <div className="bg-navy-800 text-white p-10 flex flex-col justify-center">
-        <h1 className="text-3xl font-bold mb-4">نظام المشتريات والموافقات</h1>
+      <div className="bg-brand-800 text-white p-10 flex flex-col justify-center">
+        <Link to="/" className="mb-8"><Logo /></Link>
+        <h1 className="text-3xl font-bold mb-4">أهلاً بك في نظام المشتريات والموافقات</h1>
         <p className="text-white/85 max-w-md leading-8">
           طلبات شراء شفافة، عروض أسعار موثّقة، وموافقات متعددة المستويات حسب الصلاحية،
           مع سجل تدقيق كامل لكل حركة ووكلاء ذكاء اصطناعي يراجعون العروض ويرصدون المخالفات.
@@ -38,6 +41,7 @@ export default function Login({ onLogin }) {
           </div>
           {err && <p role="alert" className="text-bad font-semibold">{err}</p>}
           <button className="btn btn-primary w-full" disabled={busy}>{busy ? 'جارٍ الدخول…' : 'دخول'}</button>
+        <Link to="/" className="block text-center text-sm text-brand-800 underline">العودة إلى الصفحة الرئيسية</Link>
         </form>
       </div>
     </div>

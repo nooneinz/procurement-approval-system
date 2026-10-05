@@ -41,7 +41,7 @@ export default function Audit() {
           <tbody>
             {flags.length === 0 && <tr><td className="td text-muted" colSpan="4">لا توجد تنبيهات.</td></tr>}
             {flags.map((f) => <tr key={f.id} className={f.resolved ? 'opacity-50' : ''}>
-              <td className="td"><Link className="underline text-navy-800 font-semibold" to={`/requests/${f.request_id}`}>{f.number}</Link><div className="text-sm text-muted">{f.title}</div></td>
+              <td className="td"><Link className="underline text-brand-800 font-semibold" to={`/requests/${f.request_id}`}>{f.number}</Link><div className="text-sm text-muted">{f.title}</div></td>
               <td className="td"><span className={`badge ${SEV[f.severity][1]}`}>{SEV[f.severity][0]}</span></td>
               <td className="td">{f.message}</td>
               <td className="td">{!f.resolved && <button className="btn btn-ghost" onClick={() => resolve(f)}>معالجة</button>}</td></tr>)}

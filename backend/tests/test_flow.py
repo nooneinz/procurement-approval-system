@@ -69,3 +69,26 @@ def test_full_flow():
         assert c.get("/api/audit/verify", headers=fin).json()["valid"] is True
         assert c.get("/api/audit/logs", headers=emp).status_code == 403
         assert c.get("/api/notifications", headers=emp).json()
+
+
+def test_agent_chat():
+    with TestClient(app) as c:
+        admin = login(c, "admin@company.local", "admin-pass-123")
+        dept = c.post("/api/departments", json={"name": "العمليات", "annual_budget": 50000}, headers=admin).json()
+        for name, email, role in [("علي", "ali2@x.om", "employee"), ("فهد", "fin2@x.om", "finance_manager")]:
+            body = {"name": name, "email": email, "password": "pass-12345", "role": role}
+            if role == "employee":
+                body["department_id"] = dept["id"]
+            c.post("/api/users", json=body, headers=admin)
+        v = c.post("/api/vendors", json={"name": "شركة مسقط"}, headers=admin).json()
+        emp, fin = login(c, "ali2@x.om"), login(c, "fin2@x.om")
+        r = c.post("/api/requests", json={"title": "أجهزة", "justification": "", "items": [{"name": "حاسوب", "quantity": 1, "unit_price": 900}]}, headers=emp).json()
+        c.post(f"/api/requests/{r['id']}/quotes", data={"vendor_id": v["id"], "amount": 900}, headers=emp)
+        out = c.post("/api/agents/chat", json={"agent": "procurement", "message": f"قارن عروض الطلب {r['number']}"}, headers=emp).json()
+        assert out["mode"] == "rules" and out["trace"][0]["tool"] == "compare_quotes" and "شركة مسقط" in out["reply"]
+        out = c.post("/api/agents/chat", json={"agent": "procurement", "message": "ما ميزانية أقسامنا؟"}, headers=emp).json()
+        assert out["trace"][0]["tool"] == "budget_status" and "ر.ع" in out["reply"]
+        # تنبيهات التدقيق للمالي فقط
+        assert "للمدير المالي" in c.post("/api/agents/chat", json={"agent": "audit", "message": "ما التنبيهات المفتوحة؟"}, headers=emp).json()["reply"]
+        assert c.post("/api/agents/chat", json={"agent": "audit", "message": "ما التنبيهات المفتوحة؟"}, headers=fin).json()["trace"][0]["tool"] == "open_flags"
+        assert c.post("/api/agents/chat", json={"agent": "nope", "message": "x"}, headers=emp).status_code == 404

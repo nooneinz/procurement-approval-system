@@ -5,7 +5,7 @@ import { useAuth } from '../App.jsx'
 
 function Stat({ label, value, to, tone = '' }) {
   const body = (
-    <div className={`card h-full ${to ? 'hover:border-navy-700' : ''}`}>
+    <div className={`card h-full ${to ? 'hover:border-brand-700' : ''}`}>
       <div className="text-muted text-sm">{label}</div>
       <div className={`text-2xl font-bold mt-1 ${tone}`}>{value}</div>
     </div>
@@ -48,8 +48,8 @@ export default function Dashboard() {
                   <span className="font-semibold">{x.name}</span>
                   <span className="text-muted">المتبقي {money(x.remaining)} من {money(x.budget)}</span>
                 </div>
-                <div className="h-3 rounded-full bg-navy-50 overflow-hidden" role="progressbar" aria-valuenow={Math.round(used)} aria-valuemin="0" aria-valuemax="100" aria-label={`استهلاك ميزانية ${x.name}`}>
-                  <div className={`h-full ${used > 90 ? 'bg-bad' : 'bg-navy-700'}`} style={{ width: `${used}%` }} />
+                <div className="h-3 rounded-full bg-brand-50 overflow-hidden" role="progressbar" aria-valuenow={Math.round(used)} aria-valuemin="0" aria-valuemax="100" aria-label={`استهلاك ميزانية ${x.name}`}>
+                  <div className={`h-full ${used > 90 ? 'bg-bad' : 'bg-brand-700'}`} style={{ width: `${used}%` }} />
                 </div>
               </div>
             )

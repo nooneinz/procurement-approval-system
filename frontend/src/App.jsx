@@ -9,6 +9,8 @@ import RequestDetail from './pages/RequestDetail.jsx'
 import Admin from './pages/Admin.jsx'
 import Audit from './pages/Audit.jsx'
 import Agents from './pages/Agents.jsx'
+import Home from './pages/Home.jsx'
+import { PublicHeader, AppHeader, Footer } from './layout.jsx'
 
 const Auth = createContext(null)
 export const useAuth = () => useContext(Auth)
@@ -26,14 +28,14 @@ function Notifications() {
   }
   return (
     <div className="relative">
-      <button className="btn btn-ghost !min-h-[44px]" onClick={toggle} aria-label="التنبيهات" aria-expanded={open}>
+      <button className="btn btn-ghost" onClick={toggle} aria-label="التنبيهات" aria-expanded={open}>
         التنبيهات {unread > 0 && <span className="badge bg-red-700 text-white">{unread}</span>}
       </button>
       {open && (
         <div className="absolute end-0 mt-2 w-80 max-w-[85vw] card shadow-lg z-20 max-h-96 overflow-auto !p-2">
           {items.length === 0 && <p className="p-3 text-muted">لا توجد تنبيهات.</p>}
           {items.map((n) => (
-            <button key={n.id} className={`block w-full text-start p-3 rounded-md hover:bg-navy-50 ${n.read ? '' : 'font-semibold'}`}
+            <button key={n.id} className={`block w-full text-start p-3 rounded-md hover:bg-brand-50 ${n.read ? '' : 'font-semibold'}`}
               onClick={() => { setOpen(false); n.request_id && nav(`/requests/${n.request_id}`) }}>
               {n.message}
             </button>
@@ -46,26 +48,17 @@ function Notifications() {
 
 function Shell({ user, onLogout, children }) {
   const canAudit = ['admin', 'finance_manager', 'general_manager'].includes(user.role)
-  const link = ({ isActive }) => `px-3 py-2 rounded-md font-semibold ${isActive ? 'bg-white text-navy-800' : 'text-white/90 hover:bg-white/10'}`
+  const nav = [['/', 'لوحة التحكم', true], ['/requests', 'الطلبات'], ['/agents', 'الوكلاء'],
+    ...(canAudit ? [['/audit', 'التدقيق']] : []),
+    ...(['admin', 'finance_manager', 'dept_manager'].includes(user.role) ? [['/admin', 'الإدارة']] : [])]
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-navy-800 text-white">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-          <Link to="/" className="font-bold text-lg ms-1">نظام المشتريات والموافقات</Link>
-          <nav className="flex flex-wrap gap-1 flex-1" aria-label="التنقل الرئيسي">
-            <NavLink to="/" end className={link}>لوحة التحكم</NavLink>
-            <NavLink to="/requests" className={link}>الطلبات</NavLink>
-            <NavLink to="/agents" className={link}>الوكلاء</NavLink>
-            {canAudit && <NavLink to="/audit" className={link}>التدقيق</NavLink>}
-            {['admin', 'finance_manager', 'dept_manager'].includes(user.role) && <NavLink to="/admin" className={link}>الإدارة</NavLink>}
-          </nav>
-          <span className="text-sm text-white/80">{user.name} — {ROLE[user.role]}</span>
-          <div className="[&_.btn]:!text-navy-800"><Notifications /></div>
-          <button className="btn btn-ghost !text-navy-800" onClick={onLogout}>خروج</button>
-        </div>
-      </header>
-      <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1">{children}</main>
-      <footer className="text-center text-sm text-muted py-4">Procurement &amp; Approval System</footer>
+      <AppHeader user={user} nav={nav} right={<>
+        <span className="text-sm text-white/80 hidden md:inline">{user.name} — {ROLE[user.role]}</span>
+        <Notifications />
+        <button className="btn btn-ghost" onClick={onLogout}>خروج</button></>} />
+      <main className="max-w-6xl w-full mx-auto px-4 py-8 flex-1">{children}</main>
+      <Footer />
     </div>
   )
 }
@@ -82,7 +75,7 @@ export default function App() {
   if (!user) return (
     <Routes>
       <Route path="/login" element={<Login onLogin={setUser} />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<div className="min-h-screen flex flex-col"><PublicHeader /><Home /><Footer /></div>} />
     </Routes>
   )
   return (
@@ -95,6 +88,7 @@ export default function App() {
           <Route path="/requests/:id" element={<RequestDetail />} />
           <Route path="/audit" element={<Audit />} />
           <Route path="/agents" element={<Agents />} />
+          <Route path="/about" element={<Home authed />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

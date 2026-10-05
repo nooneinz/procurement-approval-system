@@ -25,7 +25,7 @@ function QuoteForm({ rid, onDone }) {
     catch (ex) { setErr(ex.message) } finally { setBusy(false) }
   }
   return (
-    <form onSubmit={submit} className="border border-line rounded-lg p-4 space-y-3 bg-navy-50/50">
+    <form onSubmit={submit} className="border border-line rounded-lg p-4 space-y-3 bg-brand-50/50">
       <h3 className="font-bold">إضافة عرض سعر</h3>
       <div className="grid md:grid-cols-4 gap-3">
         <div className="md:col-span-2">
@@ -98,9 +98,9 @@ export default function RequestDetail() {
           {r.quotes.map((q) => {
             const selected = r.selected_quote_id === q.id
             return (
-              <div key={q.id} className={`border rounded-lg p-3 ${selected ? 'border-navy-700 bg-navy-50' : 'border-line'}`}>
+              <div key={q.id} className={`border rounded-lg p-3 ${selected ? 'border-brand-700 bg-brand-50' : 'border-line'}`}>
                 <div className="flex justify-between gap-2"><b>{q.vendor}</b>
-                  <span>{selected && <span className="badge bg-navy-800 text-white me-1">المختار</span>}{bestQuote === q.id && <span className="badge bg-emerald-100 text-emerald-900">ترشيح الوكيل</span>}</span></div>
+                  <span>{selected && <span className="badge bg-brand-800 text-white me-1">المختار</span>}{bestQuote === q.id && <span className="badge bg-emerald-100 text-emerald-900">ترشيح الوكيل</span>}</span></div>
                 <div className="text-xl font-bold my-1">{money(q.amount)}</div>
                 <div className="text-sm text-muted">التوريد: {q.delivery_days ? `${q.delivery_days} يوم` : 'غير محدد'}{q.notes && ` — ${q.notes}`}</div>
                 {q.analysis && ['ai', 'pdf_text'].includes(q.analysis.mode) && (
@@ -176,7 +176,7 @@ export default function RequestDetail() {
       )}
 
       {r.can_decide && (
-        <section className="card space-y-3 border-navy-700">
+        <section className="card space-y-3 border-brand-700">
           <h2 className="font-bold">قرارك بصفتك {ROLE[user.role]}</h2>
           <label className="lbl" htmlFor="c">تعليق (إلزامي عند الرفض)</label>
           <textarea id="c" className="input" rows="2" value={comment} onChange={(e) => setComment(e.target.value)} />

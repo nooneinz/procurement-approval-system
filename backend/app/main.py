@@ -596,6 +596,29 @@ def _log_agents(db: Session, r: PurchaseRequest, flags):
           actor="وكيل المشتريات")
 
 
+class ChatIn(BaseModel):
+    agent: str
+    message: str = Field(min_length=1, max_length=1000)
+    history: list[dict] = []
+
+
+@app.post("/api/agents/chat")
+def agents_chat(body: ChatIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    from .agent_chat import chat, AGENTS
+    if body.agent not in AGENTS:
+        raise HTTPException(404, "وكيل غير معروف")
+    out = chat(db, user, body.agent, body.message, body.history)
+    audit(db, user, "agent.chat", "agent", None, f"{AGENTS[body.agent]['name']}: {body.message[:120]}", actor=user.name)
+    db.commit()
+    return out
+
+
+@app.get("/api/agents/catalog")
+def agents_catalog(user: User = Depends(current_user)):
+    from .agent_chat import AGENTS
+    return [{"key": k, "name": v["name"], "chips": v["chips"], "tools": v["tools"]} for k, v in AGENTS.items()]
+
+
 @app.get("/api/agents/overview")
 def agents_overview(user: User = Depends(current_user), db: Session = Depends(get_db)):
     rows = [r for r in db.execute(select(PurchaseRequest).order_by(PurchaseRequest.id.desc())).scalars() if can_view(user, r)]

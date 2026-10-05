@@ -2,10 +2,10 @@
 
 @theme {
   --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
-  --color-navy-900: #14284a;
-  --color-navy-800: #1f3a5f;
-  --color-navy-700: #2a4a77;
-  --color-navy-50: #eef2f8;
+  --color-brand-900: #14284a;
+  --color-brand-800: #1f3a5f;
+  --color-brand-700: #2a4a77;
+  --color-brand-50: #eef2f8;
   --color-ink: #1c2430;
   --color-muted: #5b6676;
   --color-line: #d8dee8;
@@ -20,10 +20,10 @@ body { font-family: var(--font-sans); background: var(--color-surface); color: v
 :focus-visible { outline: 3px solid #3b6fb6; outline-offset: 2px; }
 .card { background: #fff; border: 1px solid var(--color-line); border-radius: 10px; padding: 1.25rem; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 44px; padding: 0 1.1rem; border-radius: 8px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: background .15s; }
-.btn-primary { background: var(--color-navy-800); color: #fff; }
-.btn-primary:hover { background: var(--color-navy-900); }
-.btn-ghost { background: #fff; color: var(--color-navy-800); border-color: var(--color-line); }
-.btn-ghost:hover { background: var(--color-navy-50); }
+.btn-primary { background: var(--color-brand-800); color: #fff; }
+.btn-primary:hover { background: var(--color-brand-900); }
+.btn-ghost { background: #fff; color: var(--color-brand-800); border-color: var(--color-line); }
+.btn-ghost:hover { background: var(--color-brand-50); }
 .btn-ok { background: var(--color-ok); color: #fff; }
 .btn-bad { background: var(--color-bad); color: #fff; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -33,3 +33,8 @@ label.lbl { display: block; font-size: .9rem; font-weight: 600; margin-bottom: .
 .th { text-align: start; font-size: .82rem; color: var(--color-muted); font-weight: 600; padding: .6rem .75rem; border-bottom: 1px solid var(--color-line); }
 .td { padding: .7rem .75rem; border-bottom: 1px solid #eef1f6; vertical-align: top; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.pattern { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 6l8 14 16-4-4 16 14 8-14 8 4 16-16-4-8 14-8-14-16 4 4-16-14-8 14-8-4-16 16 4z' fill='none' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E"); background-size: 80px 80px; }
+html { scroll-behavior: smooth; }
+.card { box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
